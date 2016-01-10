@@ -25,6 +25,7 @@ int Test_File_Generator::generateFiles(unsigned long start, unsigned long stop, 
             symbolAFile << "a";
         }
         rndFile.close();
+        symbolAFile.close();
     }
     return 0;
 }

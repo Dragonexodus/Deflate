@@ -16,18 +16,20 @@
 #include <time.h>
 #include <iomanip>
 
-#define LAUFZEIT
 class Huffman {
 public:
-    Huffman();
+    Huffman(const bool timeMeasurement = false);
     virtual ~Huffman();
 
     double compressFile(const std::string&, const std::string&);
 
 private:
 
+    bool timeMeasurement = false;
+
     Node* buildTree(std::unordered_map<char, unsigned long> &);
     void codeGenerator(Node*,std::unordered_map<char,std::deque<bool>>&);
     void compressText();
     void getSymbolsCount(const std::deque<char> &, std::unordered_map<char, unsigned long>&);
+
 };

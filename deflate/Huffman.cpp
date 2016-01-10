@@ -7,16 +7,15 @@
 
 #include "Huffman.h"
 
-Huffman::Huffman() {
+Huffman::Huffman(bool time) {
+    timeMeasurement = time;
 
 }
 
 Huffman::~Huffman() {
 }
 
-/*
-* Zählt das Auftreten der Symbole und speichert sie in SymbolsCount
-*/
+// Zählt das Auftreten der Symbole und speichert sie in SymbolsCount
 void Huffman::getSymbolsCount(const std::deque<char> &input, std::unordered_map<char, unsigned long> &symbolsCount){
 
     for (unsigned long i = 0; i < input.size(); i++) {
@@ -107,7 +106,7 @@ Node* Huffman::buildTree(std::unordered_map<char, unsigned long> &symbolsCount) 
         huffmanTree.push_back(root);
     }
 
-    //Sollten noch einzelne Knoten exisiteren, so fuege diese noch in den Baum ein
+    //Sollten noch einzelne Knoten existieren, so fuege diese noch in den Baum ein
     while(huffmanTree.size() > 1 || !minToMaxNodes.empty()) {
 
         Node *root = new Node('\0', 0);
@@ -207,8 +206,11 @@ double Huffman::compressFile(const std::string& inFileName, const std::string& o
     //Enthält auftretn von Zeichen, um dynamisch den Baum zu codieren
     std::unordered_map<char, unsigned long> symbolsCount;
 
-    double time1 = 0.0, tstart;
-    tstart = clock();
+    double time1 = 0.0;
+    double tStart = 0.0;
+    if(timeMeasurement) {
+        tStart = clock();
+    }
 
     while (!inputFile.eof()) {
         char *convPreBuffer = new char[bufferLength];
@@ -244,22 +246,22 @@ double Huffman::compressFile(const std::string& inFileName, const std::string& o
     while (!inputFile.eof()) {
         char* convPreBuffer = new char[bufferLength];
         auto bytesReaded = inputFile.readsome(convPreBuffer, bufferLength);
-        std::deque<char> buffer; //Buffer um aus Datei zu lesen
+        //char zu char* geändert, da als pointer performanter...
+        std::deque<char*> buffer; //Buffer um aus Datei zu lesen
         for (auto i = 0; i < bytesReaded; i++) {
-            buffer.push_back(convPreBuffer[i]);
+            buffer.push_back(&convPreBuffer[i]);
         }
-
-        delete[] convPreBuffer;
 
         for (auto it= buffer.begin(); it != buffer.end(); ++it) {
             //Finde das gelesene Zeichen und die entsprechende Codierung und speicher sie ab
-            auto iti = codedSymbols.find(*it);
+            auto iti = codedSymbols.find(**it);
             //TODO Derzeit Byteweises speichern des Codes->Später speichern als Bits
-#ifndef LAUFZEIT
-            std::copy(iti->second.begin(), iti->second.end(), std::ostream_iterator<bool>(outFile));
-#endif
+            if (!timeMeasurement){
+                std::copy(iti->second.begin(), iti->second.end(), std::ostream_iterator<bool>(outFile));
+            }
         }
 
+        delete[] convPreBuffer;
         inputFile.peek();
         buffer.clear();
     }
@@ -268,11 +270,9 @@ double Huffman::compressFile(const std::string& inFileName, const std::string& o
     codedSymbols.clear();
     symbolsCount.clear();
 
-    time1 += clock() - tstart;
-    time1 = time1 / CLOCKS_PER_SEC;
-    std::ofstream timeFile("Test/Testfiles/Laufzeit.csv", std::ofstream::binary | std::ofstream::app);
-    timeFile << std::setprecision(10) << time1 << ";";
-    timeFile.close();
-
+    if(timeMeasurement) {
+        time1 += clock() - tStart;
+        time1 = time1 / CLOCKS_PER_SEC;
+    }
     return time1;
 }
